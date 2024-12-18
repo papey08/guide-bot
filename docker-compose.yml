@@ -3,7 +3,7 @@ version: "3.9"
 services:
   postgres:
     image: postgres:15.5
-    container_name: guide-bot-db
+    container_name: guide-bot-db_1
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
@@ -12,7 +12,7 @@ services:
       - "5500:5432"
     volumes:
       - ./migrations/:/docker-entrypoint-initdb.d/
-      - guide-bot-db:/var/lib/postgresql/data
+      - guide-bot-db_1:/var/lib/postgresql/data
 
 volumes:
   guide-bot-db:

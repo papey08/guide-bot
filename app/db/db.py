@@ -1,29 +1,56 @@
-import app.entities as entities
+import psycopg2
+from app.entities.locations import locations
+from app.entities.place import Place
+from user_query import UserQuery
+
 
 class Db:
-    # todo
     def __init__(self, db_host, db_port, db_username, db_password, db_database_name):
-        pass
+        self.connection = psycopg2.connect(
+            host=db_host,
+            port=db_port,
+            user=db_username,
+            password=db_password,
+            dbname=db_database_name
+        )
+        self.connection.autocommit = True
 
-    # todo
     def add_user(self, username: str):
-        """
-        Добавляет нового пользователя
-        """
-        pass
+        with self.connection.cursor() as cursor:
+            cursor.execute(UserQuery.ADD_USER, (username,))
 
-    # todo
     def add_response(self, username: str, place_id: int):
-        """
-        Добавляет место, предложенное пользователю, в таблицу response
-        """
-        pass
+        with self.connection.cursor() as cursor:
+            cursor.execute(UserQuery.ADD_RESPONSE, (place_id, username))
+
+    def execute_find_place(self, query: str, vars: tuple):
+        with self.connection.cursor() as cursor:
+            cursor.execute(query, vars)
+            row = cursor.fetchone()
+            if row:
+                return Place(
+                    name=row[1],
+                    url=row[2],
+                    location=row[3]
+                )
 
     def find_place(self, category: str, location: str):
-        """
-        Находит место с заданной категорией и локацией
-        Если в данной локации нет места с данной категорией, ищем место из соседней локации (app/entities/locations.py)
-        Если и в соседней локации нет места с данной категорией, ищем место из любой другой локации.
-        :returns: entities.Place
-        """
-        pass
+        place = self.execute_find_place(UserQuery.FIND_PLACE_BY_CATEGORY_AND_LOCATION, (category, location));
+        if place:
+            return place
+        neighbors = locations.get(location, [])
+        for neighbor in neighbors:
+            place = self.execute_find_place(UserQuery.FIND_PLACE_BY_CATEGORY_AND_LOCATION, (neighbor, location));
+            if place:
+                return place
+        place = self.execute_find_place(UserQuery.FIND_PLACE_BY_CATEGORY, (category,));
+        if place:
+            return place
+        return Place()
+
+if __name__ == '__main__':
+    db = Db('localhost', 5500, 'root', 'root','guide-bot')
+    print(
+          db.find_place('bar','ЦАО').name,
+          db.find_place('bar','ЦАО').url,
+          db.find_place('bar','ЦАО').location)
