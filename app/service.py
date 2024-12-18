@@ -1,18 +1,11 @@
-import neuro
-import db
+import app.neuro as neuro
+import app.db as db
+
 
 class Service:
-    # todos
-    def __init__(self, path_to_model, db_config):
-        self.neuro = neuro.Neuro(path_to_model)
-        self.db = db.Db(db_config)
-
-    # todo
-    def add_user(self, username: str):
-        """
-        добавить пользователя в БД по нику в тг
-        """
-        pass
+    def __init__(self, neuro: neuro.Neuro, db: db.Db):
+        self.neuro = neuro
+        self.db = db
 
     def find_place(self, username: str, area, duration, budget, time, type_l, location):
         """
@@ -27,4 +20,8 @@ class Service:
         :returns:
             place: entities.Place
         """
-        pass
+        category = self.neuro.predict(area, duration, budget, time, type_l)
+        place = self.db.find_place(category, location)
+        self.db.add_user(username)
+        self.db.add_response(username, place.id)
+        return place

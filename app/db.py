@@ -1,11 +1,14 @@
+import time
+
+from entities.locations import locations
+from entities.place import Place
+
 import psycopg2
-from app.entities.locations import locations
-from app.entities.place import Place
-from user_query import UserQuery
 
 
 class Db:
-    def __init__(self, db_host, db_port, db_username, db_password, db_database_name):
+    def __init__(self, db_host: str, db_port: int, db_username: str, db_password: str, db_database_name: str):
+        time.sleep(30) # ждем чтобы бд успела подняться в докере
         self.connection = psycopg2.connect(
             host=db_host,
             port=db_port,
@@ -29,6 +32,7 @@ class Db:
             row = cursor.fetchone()
             if row:
                 return Place(
+                    id    =row[0],
                     name=row[1],
                     url=row[2],
                     location=row[3]
@@ -48,9 +52,27 @@ class Db:
             return place
         return Place()
 
-if __name__ == '__main__':
-    db = Db('localhost', 5500, 'root', 'root','guide-bot')
-    print(
-          db.find_place('bar','ЦАО').name,
-          db.find_place('bar','ЦАО').url,
-          db.find_place('bar','ЦАО').location)
+class UserQuery:
+    ADD_USER="""
+    INSERT INTO tg_user (tg_username)
+    VALUES (%s)
+    ON CONFLICT (tg_username) DO NOTHING;
+    """
+    ADD_RESPONSE="""
+    INSERT INTO response (user_id, place_id)
+    SELECT id, %s FROM tg_user WHERE tg_username = %s;
+    """
+    FIND_PLACE_BY_CATEGORY_AND_LOCATION = """
+    SELECT p.*
+    FROM place p
+    JOIN place_category pc ON p.id = pc.place_id
+    WHERE pc.category = %s AND p.location = %s
+    LIMIT 1;
+    """
+    FIND_PLACE_BY_CATEGORY = """
+    SELECT p.*
+    FROM place p
+    JOIN place_category pc ON p.id = pc.place_id
+    WHERE pc.category = %s
+    LIMIT 1;
+    """

@@ -1,14 +1,16 @@
-import os
+import app.service as service
+from entities.locations import locations
+
 import telebot
-import app.service.service as service
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 
 
 class Tgbot:
-    def __init__(self, api_key, path_to_model, db_config):
+    def __init__(self, api_key: str, service: service.Service):
         self.token = api_key
         self.bot = telebot.TeleBot(self.token)
-        self.service = service.Service(path_to_model, db_config)
+        self.service = service
+        self.user_data = {}
 
 
     def start_handler(self):
@@ -121,6 +123,34 @@ class Tgbot:
         else:
             self.bot.send_message(message.chat.id, "Пожалуйста, выберите один из вариантов.")
             return self.ask_type(message)
+        self.ask_location(message)
+
+    def ask_location(self, message):
+        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add(
+            KeyboardButton("ЦАО"), 
+            KeyboardButton("САО"),
+            KeyboardButton("СВАО"), 
+            KeyboardButton("ВАО"),
+            KeyboardButton("ЮВАО"), 
+            KeyboardButton("ЮАО"),
+            KeyboardButton("ЮЗАО"), 
+            KeyboardButton("ЗАО"),
+            KeyboardButton("СЗАО"),
+        )
+        self.bot.send_message(
+            message.chat.id,
+            "В каком округе Москвы предпочитаете отдохнуть?",
+            reply_markup=markup,
+        )
+        self.bot.register_next_step_handler(message, self.process_location)
+
+    def process_location(self, message):
+        if message.text not in locations:
+            self.bot.send_message(message.chat.id, "Пожалуйста, выберите один из вариантов.")
+            return self.ask_location(message)
+        else:
+            self.user_data[message.chat.id]['location'] = message.text
         self.make_prediction(message)
 
     def make_prediction(self, message):
@@ -137,6 +167,6 @@ class Tgbot:
         recommendation = self.service.find_place(username, area, duration, budget, time, type_l, location)
         self.bot.send_message(
             message.chat.id,
-            f"Рекомендация: {recommendation}",
+            f"Рекомендация: {recommendation.name}\n\nСсылка: {recommendation.url}",
             reply_markup=ReplyKeyboardRemove(),
         )
