@@ -47,10 +47,3 @@ class Db:
         if place:
             return place
         return Place()
-
-if __name__ == '__main__':
-    db = Db('localhost', 5500, 'root', 'root','guide-bot')
-    print(
-          db.find_place('bar','ЦАО').name,
-          db.find_place('bar','ЦАО').url,
-          db.find_place('bar','ЦАО').location)
