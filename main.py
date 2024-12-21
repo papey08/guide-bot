@@ -3,7 +3,7 @@ import os
 
 import app.tgbot as tgbot
 import app.db as db
-import app.neuro as neuro
+import app.mlmodel as mlmodel
 import app.service as service
 
 
@@ -16,8 +16,8 @@ class Application:
             db_config['password'],
             db_config['dbname']
         )
-        self.neuro = neuro.Neuro(path_to_model)
-        self.service = service.Service(self.neuro, self.db)
+        self.mlmodel = mlmodel.MlModel(path_to_model)
+        self.service = service.Service(self.mlmodel, self.db)
         self.tgbot = tgbot.Tgbot(api_key, self.service)
 
     def run(self):

@@ -1,9 +1,9 @@
-import app.neuro as neuro
+import app.mlmodel as mlmodel
 import app.db as db
 
 
 class Service:
-    def __init__(self, neuro: neuro.Neuro, db: db.Db):
+    def __init__(self, neuro: mlmodel.MlModel, db: db.Db):
         self.neuro = neuro
         self.db = db
 

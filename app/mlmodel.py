@@ -3,7 +3,7 @@ from entities.catrgories import categories
 import joblib
 
 
-class Neuro:
+class MlModel:
     def __init__(self, path_to_model: str):
         self.model = joblib.load(path_to_model)
 
