@@ -5,7 +5,7 @@ services:
     build: .
     container_name: guide-bot-app
     environment:
-      - API_KEY=7778344289:AAEYlfp8auNpvoSAsjBdkpqG0jSTTq5c7o4
+      - API_KEY=YOUR_TOKEN
     depends_on:
       - postgres
 

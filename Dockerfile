@@ -5,6 +5,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV API_KEY=7778344289:AAEYlfp8auNpvoSAsjBdkpqG0jSTTq5c7o4
+ENV API_KEY=YOUR_TOKEN
 
 CMD ["python", "main.py"]
