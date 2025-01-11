@@ -2,19 +2,34 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, make_scorer
 import joblib
 from sklearn.tree import export_graphviz
 import graphviz
 from IPython.display import Image
 from sklearn.model_selection import GridSearchCV
+import numpy as np
 
 
+# Функция для проверки количества классов и вычисления точности
+def custom_score(y_true, y_pred, required_classes=9):
+    '''
+    Данная функция проверяет число классов у созданной модели.
+    Если их число не равно 9, то она возвращает точность, равную 0.
+    '''
+    unique_classes = np.unique(y_pred)  # Получаем уникальные классы в предсказаниях
+    if len(unique_classes) == required_classes:  # Если количество классов = 9
+        return accuracy_score(y_true, y_pred)  # Возвращаем точность
+    else:
+        return 0  # Если классов не 9, возвращаем 0 (модель отбрасывается)
+
+    
 def load_data(file_path):
     '''
     Загрузка файла .csv
     '''
     df = pd.read_csv(file_path)
+    #df = df.drop_duplicates()
     return df
 
 def preprocess_data(df):
@@ -31,23 +46,34 @@ def save_model(model):
     Сохранение модели в файл
     '''
     model = model.best_estimator_
-    joblib.dump(model, 'model.pkl')
-    print("Модель сохранена в файл model.pkl")
+    joblib.dump(model, 'derevo.pkl')
+    print("Модель сохранена в файл derevo.pkl")
 
-def train_model(X_train, y_train):
+def train_model(X_train, y_train, X_test):
     '''
     Поиск подходящих гиперпараметров и обучение модели.
     '''
     param_grid = {
-        'max_depth': [3, 4, 5, 10, 15, 20],
-        'min_samples_leaf': [1, 2, 3, 4, 5],
-        'max_leaf_nodes': [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
-    }
-    model = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=7, scoring='accuracy', refit='accuracy')
+        'max_depth': [10, 15, 20],
+        'min_samples_leaf': [2, 3, 4, 5],
+        'max_leaf_nodes': [5, 10, 25]}
+    
+    custom_scorer = make_scorer(custom_score, required_classes=9) #создаём критерий выбора лучшей модели вручную
+    
+    model = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=7, scoring=custom_scorer)
+    #model = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=7, scoring='accuracy')
     model.fit(X_train, y_train)
 
+    # Получаем лучший классификатор из GridSearchCV
+    best_model = model.best_estimator_
+    # Узнаем, сколько классов она может распознавать
+    num_classes_model_can_recognize = len(best_model.classes_)
+
+    print(f"Модель может распознавать {num_classes_model_can_recognize} классов.")
+    print(f"Классы, которые модель может распознавать: {best_model.classes_}")
+    
     print("Лучшие гиперпараметры:", model.best_params_)
- 
+    
     return model
 
 def divide_data(X,y):
@@ -78,7 +104,7 @@ def testing_model(model, X_test, y_test):
     model = model.best_estimator_  # Получаем лучшую модель
     y_pred = model.predict(X_test)
     print("accuracy:", accuracy_score(y_test, y_pred))
-
+    
 
 def get_user_input():
     '''
@@ -141,7 +167,7 @@ def main():
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=1)
 
-    model = train_model(X_train, y_train)
+    model = train_model(X_train, y_train, X_test)
     save_model(model)
 
 
@@ -156,6 +182,8 @@ def main():
     else:
         result = predict_activity(model, user_input)
         print(result)
+    
+        
 
 if __name__ == "__main__":
     main()
