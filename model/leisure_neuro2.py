@@ -11,14 +11,14 @@ from sklearn.model_selection import GridSearchCV
 import numpy as np
 
 
-# Функция для проверки количества классов и вычисления точности
+
 def custom_score(y_true, y_pred, required_classes=9):
     '''
     Данная функция проверяет число классов у созданной модели.
     Если их число не равно 9, то она возвращает точность, равную 0.
     '''
-    unique_classes = np.unique(y_pred)  # Получаем уникальные классы в предсказаниях
-    if len(unique_classes) == required_classes:  # Если количество классов = 9
+    unique_classes = np.unique(y_pred)  
+    if len(unique_classes) == required_classes:  
         return accuracy_score(y_true, y_pred)  # Возвращаем точность
     else:
         return 0  # Если классов не 9, возвращаем 0 (модель отбрасывается)
@@ -58,15 +58,15 @@ def train_model(X_train, y_train, X_test):
         'min_samples_leaf': [2, 3, 4, 5],
         'max_leaf_nodes': [5, 10, 25]}
     
-    custom_scorer = make_scorer(custom_score, required_classes=9) #создаём критерий выбора лучшей модели вручную
+    custom_scorer = make_scorer(custom_score, required_classes=9) 
     
     model = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=7, scoring=custom_scorer)
     #model = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=7, scoring='accuracy')
     model.fit(X_train, y_train)
 
-    # Получаем лучший классификатор из GridSearchCV
+   
     best_model = model.best_estimator_
-    # Узнаем, сколько классов она может распознавать
+   
     num_classes_model_can_recognize = len(best_model.classes_)
 
     print(f"Модель может распознавать {num_classes_model_can_recognize} классов.")
@@ -91,7 +91,7 @@ def visualize(model, feature_names):
     dot_file = export_graphviz(
         model,
         feature_names=feature_names,
-        class_names=model.classes_.astype(str),  # Указываем названия классов
+        class_names=model.classes_.astype(str),  # Названия классов
         filled=True,  # Заливка цветом для улучшения восприятия
         rounded=True,  # Скругленные узлы
         special_characters=True  # Специальные символы, если используются
@@ -101,7 +101,7 @@ def visualize(model, feature_names):
     graph.render(filename='tree', format='png', cleanup=True)
 
 def testing_model(model, X_test, y_test):
-    model = model.best_estimator_  # Получаем лучшую модель
+    model = model.best_estimator_  
     y_pred = model.predict(X_test)
     print("accuracy:", accuracy_score(y_test, y_pred))
     
