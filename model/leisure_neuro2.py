@@ -1,6 +1,5 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, make_scorer
 import joblib
@@ -10,6 +9,25 @@ from IPython.display import Image
 from sklearn.model_selection import GridSearchCV
 import numpy as np
 
+
+def min_classes(y):
+    '''
+    Функция для нахождения классов в меньшинстве
+    '''
+    
+    class_counts = pd.Series(y).value_counts()
+
+    print("Количество экземпляров для каждого класса:")
+    print(class_counts)
+
+    total_samples = len(y)
+
+    #ыбирает те, у которых количество экземпляров меньше, чем среднее количество экземпляров на класс.
+    minority_classes = class_counts[class_counts < total_samples / len(class_counts)]
+
+    print("\nКлассы в меньшинстве:")
+    print(minority_classes)
+    print(' ')
 
 
 def custom_score(y_true, y_pred, required_classes=9):
@@ -26,10 +44,13 @@ def custom_score(y_true, y_pred, required_classes=9):
     
 def load_data(file_path):
     '''
-    Загрузка файла .csv
+    Загрузка файла .csv и его краткий анализ
     '''
     df = pd.read_csv(file_path)
     #df = df.drop_duplicates()
+    y = df['place'].values
+    min_classes(y)
+    
     return df
 
 def preprocess_data(df):
@@ -54,19 +75,18 @@ def train_model(X_train, y_train, X_test):
     Поиск подходящих гиперпараметров и обучение модели.
     '''
     param_grid = {
-        'max_depth': [10, 15, 20],
-        'min_samples_leaf': [2, 3, 4, 5],
-        'max_leaf_nodes': [5, 10, 25]}
+        'max_depth': [5, 10, 15, 20],
+        'min_samples_leaf': [1, 2, 3, 4, 5],
+        'max_leaf_nodes': [5, 10, 20, 25]}
     
-    custom_scorer = make_scorer(custom_score, required_classes=9) 
+    custom_scorer = make_scorer(custom_score, greater_is_better=True, required_classes=9)
+    class_weights = {1: 2, 2: 2, 3: 4, 4: 4, 5: 2, 6 : 3, 7 : 3, 8 : 3, 9 : 2}
     
-    model = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=7, scoring=custom_scorer)
+    model = GridSearchCV(DecisionTreeClassifier(class_weight=class_weights), param_grid = param_grid, cv=7, scoring=custom_scorer, refit = True)
     #model = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=7, scoring='accuracy')
     model.fit(X_train, y_train)
-
    
     best_model = model.best_estimator_
-   
     num_classes_model_can_recognize = len(best_model.classes_)
 
     print(f"Модель может распознавать {num_classes_model_can_recognize} классов.")
@@ -78,7 +98,7 @@ def train_model(X_train, y_train, X_test):
 
 def divide_data(X,y):
     '''
-    Функция разбивания датасета на тренинговый и тестовый датасеты.
+    Функция разбиения датасета на тренинговый и тестовый датасеты.
     '''
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = 1) #random_state = 1
     return X_train, X_test, y_train, y_test
@@ -135,9 +155,7 @@ def get_user_input():
     except ValueError as e:
         print(f"Ошибка: {e}. Попробуйте снова.")
         err = 1
-        
-        
-        
+           
     return [area, duration, budget, time, type_1], err
 
 def predict_activity(model, user_input):
@@ -160,19 +178,15 @@ def predict_activity(model, user_input):
 
 def main():
 
-
     df = load_data('leisure2.csv')
     X, y, feature_names = preprocess_data(df)
-    
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=1)
 
     model = train_model(X_train, y_train, X_test)
     save_model(model)
 
-
     testing_model(model, X_test, y_test)
-
     
     visualize(model, feature_names)
 
@@ -183,7 +197,6 @@ def main():
         result = predict_activity(model, user_input)
         print(result)
     
-        
 
 if __name__ == "__main__":
     main()
