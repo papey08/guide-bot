@@ -19,9 +19,9 @@ def custom_score(y_true, y_pred, required_classes=9):
     '''
     unique_classes = np.unique(y_pred)  
     if len(unique_classes) == required_classes:  
-        return accuracy_score(y_true, y_pred)  # Возвращаем точность
+        return accuracy_score(y_true, y_pred)  
     else:
-        return 0  # Если классов не 9, возвращаем 0 (модель отбрасывается)
+        return 0  
 
     
 def load_data(file_path):
