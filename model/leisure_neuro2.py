@@ -22,7 +22,7 @@ def min_classes(y):
 
     total_samples = len(y)
 
-    #ыбирает те, у которых количество экземпляров меньше, чем среднее количество экземпляров на класс.
+    #Выбирает те, у которых количество экземпляров меньше, чем среднее количество экземпляров на класс.
     minority_classes = class_counts[class_counts < total_samples / len(class_counts)]
 
     print("\nКлассы в меньшинстве:")
@@ -80,7 +80,7 @@ def train_model(X_train, y_train, X_test):
         'max_leaf_nodes': [5, 10, 20, 25]}
     
     custom_scorer = make_scorer(custom_score, greater_is_better=True, required_classes=9)
-    class_weights = {1: 2, 2: 2, 3: 4, 4: 4, 5: 2, 6 : 3, 7 : 3, 8 : 3, 9 : 2}
+    class_weights = {1: 2, 2: 2, 3: 4, 4: 3, 5: 2, 6 : 3, 7 : 3, 8 : 3, 9 : 2}
     
     model = GridSearchCV(DecisionTreeClassifier(class_weight=class_weights), param_grid = param_grid, cv=7, scoring=custom_scorer, refit = True)
     #model = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=7, scoring='accuracy')
